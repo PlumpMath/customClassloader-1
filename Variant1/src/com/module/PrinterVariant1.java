@@ -5,6 +5,6 @@ package com.module;
  */
 public class PrinterVariant1 {
     public String print(){
-        return "Variant1";
+        return "Variant 1";
     }
 }
