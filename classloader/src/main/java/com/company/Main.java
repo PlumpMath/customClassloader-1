@@ -8,49 +8,63 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Properties;
 
 
 public class Main {
 private static final Logger LOG = LogManager.getLogger(Main.class);
     public static void main(String[] args) {
         boolean exit = false;
-        try {
+        Properties prop = new Properties();
+
+        try (InputStream input = new FileInputStream("config.properties");
+             BufferedReader bufferedReader =
+                     new BufferedReader(new InputStreamReader(System.in))) {
+            prop.load(input);
+            String urlLib1 = prop.getProperty("jar1");
+            String urlLib2 = prop.getProperty("jar2");
+
             while (!exit) {
                 System.out.println("Please choose required functionality(1.jar1 2.jar2):");
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
                 String line = bufferedReader.readLine();
                 int variant = Integer.parseInt(line);
-                String jarName="";
-                String className="";
-                String methodName="";
+                String jarName = "";
+                String className = "";
+                String methodName = "";
                 boolean callMethod = false;
 
-                if (variant == 1) {
-                    LOG.debug("Number 1 chosen");
-                    jarName = "c:\\Variant1.jar";
-                    className = "com.module.PrinterVariant1";
-                    methodName = "print";
-                    callMethod = true;
-                } else if (variant == 2) {
-                    LOG.debug("Number 2 chosen");
-                    jarName = "c:\\Variant2.jar";
-                    className = "com.module.PrinterVariant2";
-                    methodName = "print";
-                    callMethod = true;
-                } else if (variant == -1) {
-                    exit = true;
-                    LOG.debug("Exit utility.");
-                } else {
-                    LOG.warn("Incorrect variant");
-                    System.out.println("Incorrect variant");
+                switch (variant) {
+                    case 1:
+                        LOG.debug("Number 1 chosen");
+                        jarName = urlLib1;
+                        className = "com.module.PrinterVariant1";
+                        methodName = "print";
+                        callMethod = true;
+                        break;
+                    case 2:
+                        LOG.debug("Number 2 chosen");
+                        jarName = urlLib2;
+                        className = "com.module.PrinterVariant2";
+                        methodName = "print";
+                        callMethod = true;
+                        break;
+                    case -1:
+                        exit = true;
+                        LOG.debug("Exit utility.");
+                        break;
+                    default:
+                        LOG.warn("Incorrect variant");
+                        System.out.println("Incorrect variant");
+                        break;
+
                 }
 
-                if(callMethod){
+                if (callMethod) {
                     LOG.debug("The message is: " + methodCall(jarName, className, methodName));
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException|NumberFormatException e) {
+            LOG.error(e.getMessage(),e);
         }
     }
 
@@ -64,19 +78,9 @@ private static final Logger LOG = LogManager.getLogger(Main.class);
             ClassLoader cl = new URLClassLoader(urls);
             Class cls = cl.loadClass(className);
             return cls.getMethod(methodName).invoke(cls.newInstance()).toString();
-        }
-        catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException|NoSuchMethodException|InvocationTargetException|
+                IllegalAccessException|InstantiationException|MalformedURLException e) {
+            LOG.error(e.getMessage(),e);
         }
         return "Error";
     }
